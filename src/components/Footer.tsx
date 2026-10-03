@@ -239,11 +239,18 @@ export const Footer: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Link
+                to="/sitemap"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-xs font-bold font-tajawal text-cyan-300 transition-all shadow-[0_0_15px_rgba(0,229,255,0.2)]"
+              >
+                <FolderTree className="w-3.5 h-3.5" />
+                <span>صفحة الخريطة المستقلة</span>
+              </Link>
               <button
                 onClick={() => setSitemapExpanded(!sitemapExpanded)}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-500/40 text-xs font-mono text-cyan-300 transition-all cursor-pointer"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-500/40 text-xs font-mono text-slate-300 hover:text-white transition-all cursor-pointer"
               >
-                <span>{sitemapExpanded ? 'طي الخريطة' : 'عرض الخريطة بالكامل'}</span>
+                <span>{sitemapExpanded ? 'طي الخريطة' : 'استعراض سريع'}</span>
                 {sitemapExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
             </div>

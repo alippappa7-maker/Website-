@@ -30,6 +30,7 @@ import { ScholarsPage } from './pages/ScholarsPage';
 import { ScholarDetailPage } from './pages/ScholarDetailPage';
 import { AdminUploaderPage } from './pages/AdminUploaderPage';
 import { MediaVaultPage } from './pages/MediaVaultPage';
+import { SitemapPage } from './pages/SitemapPage';
 
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -74,6 +75,7 @@ const MainLayout: React.FC = () => {
           <Route path="/scholars" element={<ScholarsPage />} />
           <Route path="/scholar/:id" element={<ScholarDetailPage />} />
           <Route path="/admin/uploader" element={<AdminUploaderPage />} />
+          <Route path="/sitemap" element={<SitemapPage />} />
           <Route path="*" element={<HomePage />} />
         </Routes>
       </main>
