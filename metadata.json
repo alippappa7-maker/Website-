@@ -1,0 +1,6 @@
+{
+  "name": "قبس | Qabas - المنصة ومستودع التطبيق",
+  "description": "الموقع الرسمي لمنصة قبس: بوابة الأخبار الموثوقة، مستودع تطبيق قبس لأندرويد، ومركز الدروس والبودكاست الفكري.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
