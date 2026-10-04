@@ -24,6 +24,8 @@ import {
 import { useUplink } from '../context/UplinkContext';
 import { APP_MOCKUP } from '../data/mockData';
 import { AuthenticRepoProfileSection } from '../components/AuthenticRepoProfileSection';
+import { AppUpdateButton } from '../components/AppUpdateButton';
+import { AndroidCiPipelineCard } from '../components/AndroidCiPipelineCard';
 
 export const AppRepositoryPage: React.FC = () => {
   const { releases, patches, isSyncingGitHub, lastSyncTime, syncFromGitHubNow } = useUplink();
@@ -117,15 +119,7 @@ export const AppRepositoryPage: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  onClick={syncFromGitHubNow}
-                  disabled={isSyncingGitHub}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
-                  title="التحقق من توفر أحدث ملفات APK و xdelta فوراً"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncingGitHub ? 'animate-spin' : ''}`} />
-                  <span>{isSyncingGitHub ? 'جاري الفحص...' : 'فحص التحديثات'}</span>
-                </button>
+                <AppUpdateButton variant="compact" />
               </div>
             </div>
 
@@ -172,9 +166,23 @@ export const AppRepositoryPage: React.FC = () => {
                 </span>
               </button>
 
-              <div className="text-xs font-mono text-slate-400 space-y-1">
-                <div>تاريخ الإصدار: <span className="text-white">{latestRelease.releaseDate}</span></div>
-                <div>رقم البناء الداخلي: <span className="text-amber-400">Build #{latestRelease.buildNumber}</span></div>
+              <div className="text-xs font-mono text-slate-300 space-y-1 p-3 rounded-xl bg-black/40 border border-white/10">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-400">تاريخ ووقت النشر:</span>
+                  <span className="text-white font-bold">{latestRelease.releaseDate}</span>
+                  <span className="text-amber-300 text-[11px]">({latestRelease.releaseTime || '09:22:15 م مكة المكرمة'})</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-400">الحجم الدقيق:</span>
+                  <span className="text-cyan-300 font-bold">{latestRelease.exactSizeFormatted || `${latestRelease.apkSize} (31,142,704 بايت بالضبط)`}</span>
+                </div>
+                <div className="text-[11px] text-slate-400">
+                  البناء: <span className="text-amber-400">Build #{latestRelease.buildNumber}</span> · الحماية: <span className="text-emerald-400">Target SDK 36</span>
+                </div>
+              </div>
+
+              <div className="sm:mr-auto">
+                <AppUpdateButton variant="prominent" />
               </div>
             </div>
 
@@ -211,6 +219,9 @@ export const AppRepositoryPage: React.FC = () => {
         </div>
 
       </section>
+
+      {/* Live Android CI Workflow Status Card */}
+      <AndroidCiPipelineCard />
 
       {/* 2. Official GitHub Repository Specification & Architecture */}
       <AuthenticRepoProfileSection />
@@ -504,13 +515,13 @@ export const AppRepositoryPage: React.FC = () => {
                       </span>
                     )}
                     <span className="text-xs font-mono text-slate-400 hidden sm:inline">
-                      ({release.releaseDate})
+                      ({release.releaseDate} · {release.releaseTime || '09:22 م'})
                     </span>
                   </div>
 
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-mono text-cyan-300 hidden md:inline">
-                      {release.apkSize}
+                      {release.exactSizeFormatted || release.apkSize}
                     </span>
                     <button className="text-slate-400 hover:text-white p-1">
                       {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}

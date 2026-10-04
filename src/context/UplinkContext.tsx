@@ -3,6 +3,7 @@ import { AppRelease, Lesson, NewsArticle, UplinkBroadcastEvent, XdeltaPatch } fr
 import { APP_RELEASES_DATA, LESSONS_DATA, NEWS_DATA, SCHOLARS_DATA, RECITER_YASSER_IMAGE } from '../data/mockData';
 import { fetchLiveGitHubReleases } from '../services/githubReleaseService';
 import { getStoredSupabaseConfig, getSupabaseClient } from '../lib/supabase';
+import { fetchLiveAndroidCiRuns, GitHubCiRun, BASELINE_CI_RUN } from '../services/githubCiService';
 
 export const INITIAL_PATCHES_DATA: XdeltaPatch[] = [
   {
@@ -40,6 +41,16 @@ interface NotificationAlert {
   timestamp: number;
 }
 
+export interface UpdateCheckResult {
+  status: 'latest' | 'new_version_found' | 'error';
+  message: string;
+  version?: string;
+  source?: string;
+  timestamp: string;
+  release?: AppRelease;
+  patch?: XdeltaPatch;
+}
+
 interface UplinkContextType {
   activeUplink: UplinkBroadcastEvent | null;
   notificationAlert: NotificationAlert | null;
@@ -53,6 +64,17 @@ interface UplinkContextType {
   supabaseConnected: boolean;
   supabaseTrackCount: number;
   syncFromSupabaseNow: () => Promise<void>;
+  // Android CI Pipeline live state
+  ciRun: GitHubCiRun | null;
+  isSyncingCi: boolean;
+  syncCiNow: () => Promise<void>;
+  // Auto-Update and Manual Fetch
+  isCheckingUpdates: boolean;
+  lastUpdateResult: UpdateCheckResult | null;
+  autoUpdateEnabled: boolean;
+  setAutoUpdateEnabled: (enabled: boolean) => void;
+  checkForUpdatesNow: (isManual?: boolean) => Promise<UpdateCheckResult>;
+  clearUpdateResult: () => void;
   startUplink: (event: Partial<UplinkBroadcastEvent>) => void;
   updateUplinkProgress: (progress: number, speed?: string, uploaded?: string) => void;
   completeUplink: (resultData: {
@@ -82,8 +104,32 @@ export const UplinkProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [supabaseConnected, setSupabaseConnected] = useState(true);
   const [supabaseTrackCount, setSupabaseTrackCount] = useState(0);
 
+  // Dedicated App Update State
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+  const [lastUpdateResult, setLastUpdateResult] = useState<UpdateCheckResult | null>(null);
+  const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
+
+  // Live Android CI Workflow State
+  const [ciRun, setCiRun] = useState<GitHubCiRun | null>(BASELINE_CI_RUN);
+  const [isSyncingCi, setIsSyncingCi] = useState(false);
+
   const channelRef = useRef<BroadcastChannel | null>(null);
   const simulationIntervalRef = useRef<any>(null);
+
+  // Fetch Live Android CI workflow runs
+  const syncCiNow = async () => {
+    setIsSyncingCi(true);
+    try {
+      const { latestRun } = await fetchLiveAndroidCiRuns();
+      if (latestRun) {
+        setCiRun(latestRun);
+      }
+    } catch (e) {
+      console.warn('syncCiNow error:', e);
+    } finally {
+      setIsSyncingCi(false);
+    }
+  };
 
   // Synchronize live audio tracks from Supabase
   const syncFromSupabaseNow = async () => {
@@ -155,11 +201,15 @@ export const UplinkProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const MAX_RELEASES_RETAIN = 3;
   const MAX_PATCHES_RETAIN = 2;
 
-  // Synchronize live with GitHub Releases
+  // Synchronize live with GitHub Releases and Android CI
   const syncFromGitHubNow = async () => {
     setIsSyncingGitHub(true);
     try {
-      const { releases: liveReleases, patches: livePatches } = await fetchLiveGitHubReleases();
+      const [releasesData] = await Promise.all([
+        fetchLiveGitHubReleases(),
+        syncCiNow()
+      ]);
+      const { releases: liveReleases, patches: livePatches } = releasesData;
       if (liveReleases.length > 0) {
         setReleases(liveReleases.slice(0, MAX_RELEASES_RETAIN));
       }
@@ -174,11 +224,127 @@ export const UplinkProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  // Dedicated manual or automated check for updates
+  const checkForUpdatesNow = async (isManual = true): Promise<UpdateCheckResult> => {
+    setIsCheckingUpdates(true);
+    const nowTimestamp = new Date().toLocaleTimeString('ar-EG');
+
+    try {
+      // 1. Fetch releases and Android CI workflow runs concurrently
+      const [releasesData] = await Promise.all([
+        fetchLiveGitHubReleases(),
+        syncCiNow(),
+        syncFromSupabaseNow()
+      ]);
+      const { releases: liveReleases, patches: livePatches, sourceRepo } = releasesData;
+
+      if (liveReleases.length > 0) {
+        const topRelease = liveReleases[0];
+        const currentTop = releases[0];
+
+        // Compare versions or build numbers
+        const isNewer = currentTop ? (topRelease.version !== currentTop.version || topRelease.buildNumber > currentTop.buildNumber) : false;
+
+        setReleases(liveReleases.slice(0, MAX_RELEASES_RETAIN));
+        if (livePatches.length > 0) {
+          setPatches(livePatches.slice(0, MAX_PATCHES_RETAIN));
+        }
+        setLastSyncTime(nowTimestamp);
+
+        if (isNewer) {
+          // New version discovered!
+          setNotificationAlert({
+            id: `alert-apk-${Date.now()}`,
+            type: 'apk',
+            title: `تم إطلاق إصدار جديد: ${topRelease.version}`,
+            subtitle: `حزمة APK الرسمية وتحديثات xdelta متاحة للتحميل الآن (${topRelease.apkSize})`,
+            link: '/app-repository',
+            timestamp: Date.now()
+          });
+
+          const result: UpdateCheckResult = {
+            status: 'new_version_found',
+            message: `تم اكتشاف إصدار جديد (${topRelease.version}) وجلبه بنجاح!`,
+            version: topRelease.version,
+            source: sourceRepo || 'GitHub Releases',
+            timestamp: nowTimestamp,
+            release: topRelease,
+            patch: livePatches[0]
+          };
+          setLastUpdateResult(result);
+          return result;
+        } else {
+          // Already on latest
+          const result: UpdateCheckResult = {
+            status: 'latest',
+            message: `أنت تستخدم أحدث إصدار معتمد حالياً (${topRelease.version})`,
+            version: topRelease.version,
+            source: sourceRepo || 'GitHub Releases',
+            timestamp: nowTimestamp,
+            release: topRelease,
+            patch: livePatches[0]
+          };
+          setLastUpdateResult(result);
+          return result;
+        }
+      } else {
+        const result: UpdateCheckResult = {
+          status: 'latest',
+          message: `تطبيق قبس محدث لأحدث إصدار (${releases[0]?.version || 'v1.2.1'})`,
+          version: releases[0]?.version || 'v1.2.1',
+          source: 'المنظومة السحابية الموثقة',
+          timestamp: nowTimestamp,
+          release: releases[0]
+        };
+        setLastUpdateResult(result);
+        return result;
+      }
+    } catch (err: any) {
+      console.warn('Update check failed:', err);
+      const result: UpdateCheckResult = {
+        status: 'error',
+        message: 'تعذر الاتصال بمستودع GitHub حالياً، تم الإبقاء على آخر حزمة معتمدة',
+        version: releases[0]?.version || 'v1.2.1',
+        timestamp: nowTimestamp
+      };
+      setLastUpdateResult(result);
+      return result;
+    } finally {
+      setIsCheckingUpdates(false);
+    }
+  };
+
+  const clearUpdateResult = () => {
+    setLastUpdateResult(null);
+  };
+
   // Run on mount
   useEffect(() => {
     syncFromGitHubNow();
     syncFromSupabaseNow();
+    syncCiNow();
   }, []);
+
+  // Background Automatic Updater Loop (polls every 60 seconds)
+  useEffect(() => {
+    if (!autoUpdateEnabled) return;
+
+    const autoUpdateInterval = setInterval(() => {
+      // Silent background fetch
+      checkForUpdatesNow(false);
+    }, 60000);
+
+    const onWindowFocus = () => {
+      checkForUpdatesNow(false);
+    };
+
+    window.addEventListener('focus', onWindowFocus);
+
+    return () => {
+      clearInterval(autoUpdateInterval);
+      window.removeEventListener('focus', onWindowFocus);
+    };
+  }, [autoUpdateEnabled]);
 
   // Setup BroadcastChannel for cross-tab realtime sync
   useEffect(() => {
@@ -501,6 +667,15 @@ export const UplinkProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         supabaseConnected,
         supabaseTrackCount,
         syncFromSupabaseNow,
+        ciRun,
+        isSyncingCi,
+        syncCiNow,
+        isCheckingUpdates,
+        lastUpdateResult,
+        autoUpdateEnabled,
+        setAutoUpdateEnabled,
+        checkForUpdatesNow,
+        clearUpdateResult,
         startUplink,
         updateUplinkProgress,
         completeUplink,

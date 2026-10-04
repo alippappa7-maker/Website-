@@ -17,6 +17,7 @@ import {
   Sliders,
   Check
 } from 'lucide-react';
+import { AndroidCiPipelineCard } from './AndroidCiPipelineCard';
 
 interface FeatureGroup {
   id: string;
@@ -111,9 +112,12 @@ export const AuthenticRepoProfileSection: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono font-semibold shrink-0">
-          <ShieldCheck className="w-4 h-4 text-amber-400" />
-          <span>تطبيق وقفي غير ربحي 100%</span>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <AndroidCiPipelineCard variant="compact" />
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono font-semibold">
+            <ShieldCheck className="w-4 h-4 text-amber-400" />
+            <span>تطبيق وقفي غير ربحي 100%</span>
+          </div>
         </div>
       </div>
 
@@ -135,14 +139,14 @@ export const AuthenticRepoProfileSection: React.FC = () => {
 
         <div className="p-5 rounded-2xl bg-[#090E1A] border border-amber-500/30 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400">الإصدار الحالي</span>
+            <span className="text-xs font-mono text-slate-400">الإصدار والحجم الدقيق</span>
             <Layers className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-sm sm:text-base font-extrabold text-white font-mono">
-            v1.2.1 (بناء رقم 3)
+            v1.2.1 · 29.7 MB
           </div>
-          <div className="text-[11px] text-amber-300 font-mono">
-            يدعم أندرويد 7.0 حتى أحدث إصدار
+          <div className="text-[10px] text-amber-300 font-mono leading-tight">
+            31,142,704 بايت بالضبط · نشر 2026-10-02 (09:22 م)
           </div>
         </div>
 

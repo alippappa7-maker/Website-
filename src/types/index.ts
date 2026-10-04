@@ -87,7 +87,11 @@ export interface AppRelease {
   version: string;
   buildNumber: number;
   releaseDate: string;
+  releaseTime?: string;
+  publishedAtIso?: string;
   apkSize: string;
+  exactSizeBytes?: number;
+  exactSizeFormatted?: string;
   sha256: string;
   minAndroid: string;
   targetAndroid: string;

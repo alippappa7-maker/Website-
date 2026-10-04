@@ -19,6 +19,7 @@ import { MediaViewerModal } from './components/MediaViewerModal';
 import { MediaUploadModal } from './components/MediaUploadModal';
 import { AdminAuthModal } from './components/AdminAuthModal';
 import { ToastContainer } from './components/ToastContainer';
+import { WebUpdateListener } from './components/WebUpdateListener';
 
 import { HomePage } from './pages/HomePage';
 import { LessonsHubPage } from './pages/LessonsHubPage';
@@ -97,6 +98,9 @@ const MainLayout: React.FC = () => {
 
       {/* Global Sticky Continuous Audio Player */}
       <GlobalStickyPlayer />
+
+      {/* Real-Time Auto-Update Web Listener */}
+      <WebUpdateListener />
 
       {/* HUD Command Palette / Search Modal */}
       <GlobalSearchModal 

@@ -19,6 +19,7 @@ import {
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useToast } from '../context/ToastContext';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { AppUpdateButton } from './AppUpdateButton';
 
 interface NavbarProps {
   onOpenSearch: () => void;
@@ -136,6 +137,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSearch }) => {
             </kbd>
           </button>
 
+          {/* Dedicated App Update Button (Fetch Latest Release) */}
+          <AppUpdateButton variant="navbar" />
+
           <Link
             to="/app-repository"
             className="hidden xl:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-slate-950 bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 hover:from-amber-200 hover:to-amber-400 shadow-[0_0_20px_rgba(255,215,0,0.25)] hover:shadow-[0_0_25px_rgba(255,215,0,0.4)] transition-all transform active:scale-95 whitespace-nowrap"
@@ -181,6 +185,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSearch }) => {
           </div>
 
           <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
+            <AppUpdateButton variant="prominent" />
             <Link
               to="/app-repository"
               onClick={() => setMobileMenuOpen(false)}

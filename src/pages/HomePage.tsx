@@ -28,6 +28,7 @@ import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { useUplink } from '../context/UplinkContext';
 import { useRating } from '../context/RatingContext';
 import { useVisitorStats } from '../context/VisitorStatsContext';
+import { AppUpdateButton } from '../components/AppUpdateButton';
 import { CommunityReviewsSection } from '../components/CommunityReviewsSection';
 import { MediaVaultHomeSection } from '../components/MediaVaultHomeSection';
 
@@ -95,7 +96,7 @@ export const HomePage: React.FC = () => {
                 </span>
                 <span className="text-slate-600">|</span>
                 <span className="text-xs font-semibold text-amber-400">
-                  إصدار الأندرويد المستقر {latestRelease.version}
+                  إصدار الأندرويد المستقر {latestRelease.version} ({latestRelease.exactSizeFormatted || `${latestRelease.apkSize} - 31,142,704 بايت`}) · نشر في {latestRelease.releaseDate} ({latestRelease.releaseTime || '09:22 م'})
                 </span>
               </div>
 
@@ -129,6 +130,10 @@ export const HomePage: React.FC = () => {
                   <Radio className="w-4 h-4 text-cyan-400" />
                   <span>تصفح الدروس والبودكاست</span>
                 </Link>
+
+                <div className="flex items-center">
+                  <AppUpdateButton variant="compact" />
+                </div>
               </div>
 
               {/* HUD Real Dynamic Metrics bar powered by Supabase Realtime */}
